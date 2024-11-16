@@ -1,0 +1,44 @@
+ARG ARCH=amd64
+FROM $ARCH/ubuntu:20.04
+MAINTAINER pamtrak06@gmail.com
+
+ARG SALT_NODE_TYPE
+ARG SALT_MASTER_NAME
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -y && apt-get install -y \
+    apt-utils curl software-properties-common \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -fsSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public | tee /etc/apt/keyrings/SaltProjectKey.gpg.pub
+RUN echo "deb [signed-by=/etc/apt/keyrings/SaltProjectKey.gpg.pub arch=amd64] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main" | tee /etc/apt/sources.list.d/salt.list
+RUN apt-get update -y && \
+    apt-get install iputils-ping net-tools supervisor -y && \
+    apt-get install salt-master salt-minion salt-ssh salt-syndic salt-cloud salt-api -y && \
+    apt-get clean all
+
+RUN mkdir -p /etc/salt/master.d/
+RUN mkdir -p /etc/salt/minion.d/
+RUN chown -R root:root /etc/salt/
+
+RUN mkdir -p /etc/salt/pki/master/minions
+RUN mkdir -p /etc/salt/pki/master/minions_pre
+RUN mkdir -p /etc/salt/pki/master/minions_rejected
+RUN mkdir -p /etc/salt/pki/minion
+
+RUN chown -R root:root /etc/salt/pki
+RUN chmod -R 700 /etc/salt/pki
+
+RUN echo "127.0.0.1   salt" >> /etc/hosts
+
+COPY salt_master_master .
+COPY docker-entrypoint-shell.sh .
+COPY docker-entrypoint-supervisor.sh .
+COPY supervisord-syndic.conf .
+
+COPY salt-configure.sh .
+RUN . ./salt-configure.sh
+
+EXPOSE 4505 4506
+
+CMD ["./docker-entrypoint.sh"]

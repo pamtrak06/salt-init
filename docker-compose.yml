@@ -1,0 +1,51 @@
+version: '3.7'
+
+services: 
+  salt_master:
+    container_name: salt_master
+    build:
+      context: ./build
+      args:
+        - SALT_NODE_TYPE=MASTER
+      dockerfile: Dockerfile.master
+    environment:
+      - SALT_NODE_TYPE=MASTER
+  salt_syndic1:
+    container_name: salt_syndic1
+    build:
+      context: ./build
+      dockerfile: Dockerfile.master
+      args:
+        - SALT_NODE_TYPE=SYNDIC
+        - SALT_MASTER_NAME=salt_master
+    environment:
+      - SALT_NODE_TYPE=SYNDIC
+      - SALT_HOSTNAME=salt_syndic1
+  salt_syndic2:
+    container_name: salt_syndic2
+    build:
+      context: ./build
+      dockerfile: Dockerfile.master
+      args:
+        - SALT_NODE_TYPE=SYNDIC
+        - SALT_MASTER_NAME=salt_master
+    environment:
+      - SALT_NODE_TYPE=SYNDIC
+      - SALT_HOSTNAME=salt_syndic2
+    depends_on:
+      - salt_master
+  salt_minion:
+    build:
+      context: ./build
+      dockerfile: Dockerfile.minion
+      args:
+        - SALT_NODE_TYPE=MINION
+        - SALT_MASTER_NAME=salt_master
+    environment:
+      - SALT_NODE_TYPE=MINION
+    depends_on:
+      - salt_master
+
+networks:
+  default:
+    name: salt-network
