@@ -1,1 +1,2 @@
-_logs/config-export.log
+_logs/*.log
+_exports/*
