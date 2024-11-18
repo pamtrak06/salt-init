@@ -167,7 +167,7 @@ check_connectivity() {
         log_report "Key Check for $node ($node_type)" "$command" "[DEBUG] Checking keys for $node on master." ""
 
         log "DEBUG" "Checking configuration of $node..."
-        command="docker exec $node cat /etc/salt/minion | grep '^master:'"
+        command="docker exec $node cat /etc/salt/minion.d/minion.conf | grep '^master:' | grep salt_master"
         log "DEBUG" "Executing command: $command"
         eval "$command | tee -a \"$LOG_FILE\""
         log_report "Configuration Check for $node ($node_type)" "$command" "[DEBUG] Configuration checked for $node." ""
@@ -236,19 +236,30 @@ for syndic in "${SYNDICS[@]}"; do
    log_report "Ping Test from ${syndic} to ${MASTER}" "${command}" "${output}" "${result}"
 
    log INFO "Test if syndic can reach master through Salt command."
-   command="./docker-compose.sh exec ${syndic} salt ${MASTER} test.ping"
+   command="./docker-compose.sh exec ${syndic} salt -l info ${MASTER} test.ping"
    log "DEBUG" "Executing command: $command"
 
-   if eval "${command}"; then 
-       output="[INFO] ${syndic} can reach ${MASTER} via Salt command."
-       result="Passed"
-   else 
-       output="[ERROR] ${syndic} cannot reach ${MASTER} via Salt command."
-       result="Failed"
+   output=$(eval "${command}" 2>&1)
+   exit_code=$?
+
+   if [ $exit_code -eq 0 ] && [ -n "$output" ]; then
+        log "INFO" "Command executed successfully with non-empty output."
+        log "DEBUG" "Command output: $output"
+        result="Passed"
+        log_output="[INFO] ${syndic} can reach ${MASTER} via Salt command. Output: ${output}"
+   elif [ $exit_code -eq 0 ] && [ -z "$output" ]; then
+        log "WARNING" "Command executed successfully but with empty output."
+        result="Warning"
+        log_output="[WARNING] ${syndic} can reach ${MASTER} via Salt command, but the output is empty."
+   else
+        log "ERROR" "Command failed with exit code $exit_code"
+        log "DEBUG" "Error output: $output"
+        result="Failed"
+        log_output="[ERROR] ${syndic} cannot reach ${MASTER} via Salt command. Error: ${output}"
    fi
    
    # Log result of Salt command test.
-   log_report "Salt Command Test from ${syndic} to ${MASTER}" "${command}" "${output}" "${result}"
+   log_report "Salt Command Test from ${syndic} to ${MASTER}" "${command}" "${log_output}" "${result}"
 
 done
 
@@ -395,10 +406,10 @@ for syndic in "${SYNDICS[@]}"; do
 
 done 
 
-log INFO "Verify that the minion configuration file (/etc/salt/minion) has the correct master address set."
+log INFO "Verify that the minion configuration file (/etc/salt/minion.d/minion.conf) has the correct master address set."
 for syndic in "${SYNDICS[@]}"; do 
 
-     command="docker exec -it salt_syndic1 cat /etc/salt/minion | grep master:"
+     command="docker exec -it salt_syndic1 cat /etc/salt/minion.d/minion.conf | grep master: | grep salt_master"
      log "DEBUG" "Executing command: $command"
 
      if eval "${command}"; then  

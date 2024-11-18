@@ -1,53 +1,51 @@
 #!/bin/bash
 set -e
 
-# Configuration du fichier /etc/salt/master
+# Configure file /etc/salt/master for master node
 configure_master() {
     mv /etc/salt/master /etc/salt/master.template
     cp salt_master_master /etc/salt/master.d/master.conf
-    
-    # echo "auto_accept: True" >> /etc/salt/master
-    # echo "interface: 0.0.0.0" >> /etc/salt/master
-    # echo "publish_port: 4505" >> /etc/salt/master
-    # echo "ret_port: 4506" >> /etc/salt/master
-    
-    # # configuration relative to salt-api (needed to use salt-api)
-    # echo "netapi:">> /etc/salt/master
-    # echo "  rest_cherrypy:">> /etc/salt/master
-    # echo "    port: 8000">> /etc/salt/master
-    # echo "    host: 0.0.0.0">> /etc/salt/master
 }
 
-# Configuration du fichier /etc/salt/minion pour le minion
+# Configure file /etc/salt/minion for minion node
 configure_minion() {
     mv /etc/salt/minion /etc/salt/minion.template
 
-    # spécifier plusieurs syndics comme masters dans le fichier /etc/salt/minion
-    # répartition de la charge entre les deux syndics (options random_master, master_type)
-    echo "master:" > /etc/salt/minion.d/minion.conf
+    # Specify multiple syndics as masters in the /etc/salt/minion file
+    # Load balancing between the two syndics (options random_master, master_type)
+    echo "# Specifies the hostname or IP address of the Salt master that the minion will connect to for commands and configurations." > /etc/salt/minion.d/minion.conf
+    echo "master:" >> /etc/salt/minion.d/minion.conf
     echo "  - salt_syndic1" >> /etc/salt/minion.d/minion.conf
     echo "  - salt_syndic2" >> /etc/salt/minion.d/minion.conf
+    
+    echo "# Enables load balancing by allowing the minion to randomly select a master from a list of configured masters." >> /etc/salt/minion.d/minion.conf
     echo "random_master: True" >> /etc/salt/minion.d/minion.conf
+
+    echo "# Defines the type of master connection, which can be 'str' for a string-based connection or other types as specified in the configuration." >> /etc/salt/minion.d/minion.conf
     echo "master_type: failover" >> /etc/salt/minion.d/minion.conf
 
-    #echo "id: minionname" >> /etc/salt/minion
-    # echo "master_port: 4506" >> /etc/salt/minion
-    # echo "user: root" >> /etc/salt/minion
-    # echo "pki_dir: /etc/salt/pki/minion" >> /etc/salt/minion
-    # echo "cachedir: /var/cache/salt/minion" >> /etc/salt/minion
-    # echo "log_level: error" >> /etc/salt/minion
-    # echo "verify_env: True" >> /etc/salt/minion
-    # echo "sudo_user: root" >> /etc/salt/minion
+    # echo "master_port: 4506" >> /etc/salt/minion.d/minion.conf
+    # echo "user: root" >> /etc/salt/minion.d/minion.conf
+    # echo "pki_dir: /etc/salt/pki/minion" >> /etc/salt/.d/minion.conf
+    # echo "cachedir: /var/cache/salt/minion" >> /etc/salt/minion.d/minion.conf
+    # echo "log_level: error" >> /etc/salt/minion.d/minion.conf
+    # echo "verify_env: True" >> /etc/salt/minion.d/minion.conf
+    # echo "sudo_user: root" >> /etc/salt/minion.d/minion.conf
 }
 
-# Configuration des fichiers /etc/salt/master pour le syndic
+# Configure file /etc/salt/master for syndic node
 configure_syndic() {
     mv /etc/salt/master /etc/salt/master.template
-    #echo "master: localhost" >> /etc/salt/master.d/master.conf
+    
+    echo "# Defines the name of the Salt master that the syndics will communicate with."
     echo "syndic_master: $SALT_MASTER_NAME" >> /etc/salt/master.d/master.conf
+    
+    echo "# Specifies the port number used by the Salt syndic to connect to the Salt master."
     echo "syndic_master_port: 4506" >> /etc/salt/master.d/master.conf
+    
     # echo "syndic_log_file: /var/log/salt/syndic" >> /etc/salt/master.d/master.conf
     # echo "syndic_pidfile: /var/run/salt-syndic.pid" >> /etc/salt/master.d/master.conf
+    
     echo "# Enable auto-acceptance of minion keys" >> /etc/salt/master.d/master.conf
     echo "auto_accept: True" >> /etc/salt/master.d/master.conf
 
@@ -63,13 +61,17 @@ configure_syndic() {
     echo "    - /srv/salt" >> /etc/salt/master.d/master.conf
     
     mv /etc/salt/minion /etc/salt/minion.template
+    echo "# Specifies the hostname or IP address of the Salt master that the minion will connect to for commands and configurations." >> /etc/salt/minion.d/minion.conf
     echo "master: $SALT_MASTER_NAME" >> /etc/salt/minion.d/minion.conf
+    
+    echo "# Determines how the minion/syndic retrieves files from the Salt master, with options like 'local' for local file retrieval or 'remote' for fetching files over the network." >> /etc/salt/minion.d/minion.conf
     echo "file_client: remote" >> /etc/salt/minion.d/minion.conf
+    
+    echo "# Sets the directory path where the minion/syndic's public and private keys are stored for secure communication with the Salt master." >> /etc/salt/minion.d/minion.conf
     echo "pki_dir: /etc/salt/pki/minion" >> /etc/salt/minion.d/minion.conf
-    # echo "id: $SALT_HOSTNAME" > /etc/salt/minion.d/minion.conf
 }
 
-# Configuration en fonction du type de serveur Salt
+# Configure depending Salt node type (master, syndic, minion)
 if [ "$SALT_NODE_TYPE" = "MASTER" ]; then
     echo "Configuring Salt Master..."
     cp docker-entrypoint-shell.sh ./docker-entrypoint.sh

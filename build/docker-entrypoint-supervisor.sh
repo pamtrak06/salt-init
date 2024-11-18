@@ -25,9 +25,11 @@ add_if_not_exists() {
     local file="$1"
     local keyword="$2"
     local line="$3"
+    local comment="$4"
     
-    if ! grep -q "^$keyword:" "$file"; then
+    if [ -z "$(grep "^$keyword:" "$file")" ]; then
         echo "$line" >> "$file"
+        echo "$comment" >> "$file"
         log "INFO" "Added '$line' to $file"
     else
         log "INFO" "'$keyword:' already exists in $file. Skipping addition."
@@ -39,12 +41,16 @@ if [ "$SALT_NODE_TYPE" = "MASTER" ]; then
     echo "Salt Master configuration preprocessing..."
 elif [ "$SALT_NODE_TYPE" = "SYNDIC" ]; then
     echo "Salt Syndic configuration preprocessing..."
-    add_if_not_exists /etc/salt/master.d/master.conf "id:" "id: $SALT_HOSTNAME"
-    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: $SALT_HOSTNAME"
+    comment="# Sets the unique identifier for the minion, which is typically derived from the hostname of the machine."
+    add_if_not_exists /etc/salt/master.d/master.conf "id:" "id: $SALT_HOSTNAME" "$comment"
+    comment="# Sets the unique identifier for the minion, which is typically derived from the hostname of the machine."
+    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: $SALT_HOSTNAME" "$comment"
 elif [ "$SALT_NODE_TYPE" = "MINION" ]; then
     echo "Salt Minion configuration preprocessing..."
-    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: $SALT_HOSTNAME"
-    add_if_not_exists /etc/salt/minion.d/minion.conf "auth_timeout:" "auth_timeout: 5" # to fix : salt.exceptions.SaltClientError: Unable to sign_in to master: Attempt to authenticate with the salt master failed with timeout error
+    comment="# Sets the unique identifier for the minion, which is typically derived from the hostname of the machine."
+    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: $SALT_HOSTNAME" "$comment"
+    comment="# Sets the timeout duration (in seconds) for authentication requests between the Salt master and its minions."
+    add_if_not_exists /etc/salt/minion.d/minion.conf "auth_timeout:" "auth_timeout: 5" "$comment" # to fix : salt.exceptions.SaltClientError: Unable to sign_in to master: Attempt to authenticate with the salt master failed with timeout error
 else
     echo "Runtime Error: Invalid SALT_NODE_TYPE. Must be either MASTER, SYNDIC or MINION."
     exit 1
