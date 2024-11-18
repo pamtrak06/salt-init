@@ -48,8 +48,16 @@ configure_syndic() {
     echo "syndic_master_port: 4506" >> /etc/salt/master.d/master.conf
     # echo "syndic_log_file: /var/log/salt/syndic" >> /etc/salt/master.d/master.conf
     # echo "syndic_pidfile: /var/run/salt-syndic.pid" >> /etc/salt/master.d/master.conf
+    echo "# Enable auto-acceptance of minion keys" >> /etc/salt/master.d/master.conf
+    echo "auto_accept: True" >> /etc/salt/master.d/master.conf
+
+    echo "# Enables ordered communication between multiple Salt masters like (syndics)" >> /etc/salt/master.d/master.conf
     echo "order_masters: True" >> /etc/salt/master.d/master.conf
+
+    echo "# This defines how long the master should wait for syndics to respond." >> /etc/salt/master.d/master.conf
     echo "syndic_wait: 30" >> /etc/salt/master.d/master.conf
+    
+    echo "# This defines the location of Salt states files." >> /etc/salt/master.d/master.conf
     echo "file_roots:" >> /etc/salt/master.d/master.conf
     echo "  base:" >> /etc/salt/master.d/master.conf
     echo "    - /srv/salt" >> /etc/salt/master.d/master.conf
