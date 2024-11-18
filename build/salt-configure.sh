@@ -37,10 +37,10 @@ configure_minion() {
 configure_syndic() {
     mv /etc/salt/master /etc/salt/master.template
     
-    echo "# Defines the name of the Salt master that the syndics will communicate with."
+    echo "# Defines the name of the Salt master that the syndics will communicate with." >> /etc/salt/master.d/master.conf
     echo "syndic_master: $SALT_MASTER_NAME" >> /etc/salt/master.d/master.conf
     
-    echo "# Specifies the port number used by the Salt syndic to connect to the Salt master."
+    echo "# Specifies the port number used by the Salt syndic to connect to the Salt master." >> /etc/salt/master.d/master.conf
     echo "syndic_master_port: 4506" >> /etc/salt/master.d/master.conf
     
     # echo "syndic_log_file: /var/log/salt/syndic" >> /etc/salt/master.d/master.conf
