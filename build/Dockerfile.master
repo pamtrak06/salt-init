@@ -19,14 +19,14 @@ RUN apt-get update -y && \
 
 RUN mkdir -p /etc/salt/master.d/
 RUN mkdir -p /etc/salt/minion.d/
-RUN chown -R root:root /etc/salt/
+RUN chown -R salt:salt /etc/salt/
 
 RUN mkdir -p /etc/salt/pki/master/minions
 RUN mkdir -p /etc/salt/pki/master/minions_pre
 RUN mkdir -p /etc/salt/pki/master/minions_rejected
 RUN mkdir -p /etc/salt/pki/minion
 
-RUN chown -R root:root /etc/salt/pki
+RUN chown -R salt:salt /etc/salt/pki
 RUN chmod -R 700 /etc/salt/pki
 
 RUN echo "127.0.0.1   salt" >> /etc/hosts
