@@ -36,12 +36,12 @@ sleep 10
 
 # Execute config-export.sh if the flag is set
 if [ "$EXPORT_CONFIG" = true ]; then
-    ./config-export.sh
+    ./salt-config-export.sh
 fi
 
 sleep 10
 
 # Execute check-health.sh if the flag is set
 if [ "$CHECK_HEALTH" = true ]; then
-    ./check-health.sh
+    ./salt-check-health.sh
 fi
