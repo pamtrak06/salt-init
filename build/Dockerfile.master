@@ -29,7 +29,7 @@ RUN mkdir -p /etc/salt/pki/minion
 RUN chown -R salt:salt /etc/salt/pki
 RUN chmod -R 700 /etc/salt/pki
 
-RUN echo "127.0.0.1   salt" >> /etc/hosts
+#RUN echo "127.0.0.1   salt" >> /etc/hosts
 
 COPY salt_master_master .
 COPY docker-entrypoint-shell.sh .
