@@ -10,6 +10,11 @@ syndic_wait: 30
 # This allows the master to failover to other syndics if one is unresponsive.
 syndic_failover: random
 
+# Define the syndic master addresses
+syndic_master: 
+  - salt_syndic1
+  - salt_syndic2
+
 # This ensures that all events are forwarded from syndics to the master.
 syndic_forward_all_events: True
 
