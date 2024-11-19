@@ -27,9 +27,9 @@ add_if_not_exists() {
     local line="$3"
     local comment="$4"
     
-    if [ -z "$(grep "^$keyword:" "$file")" ]; then
-        echo "$line" >> "$file"
+    if [ -z "$(grep "^$keyword" "$file")" ]; then
         echo "$comment" >> "$file"
+        echo "$line" >> "$file"
         log "INFO" "Added '$line' to $file"
     else
         log "INFO" "'$keyword:' already exists in $file. Skipping addition."
@@ -41,10 +41,10 @@ if [ "$SALT_NODE_TYPE" = "MASTER" ]; then
     echo "Salt Master configuration preprocessing..."
 elif [ "$SALT_NODE_TYPE" = "SYNDIC" ]; then
     echo "Salt Syndic configuration preprocessing..."
-    comment="# Sets the unique identifier for the minion, which is typically derived from the hostname of the machine."
+    comment="# Sets the unique identifier for the master, which is typically derived from the hostname of the machine."
     add_if_not_exists /etc/salt/master.d/master.conf "id:" "id: $SALT_HOSTNAME" "$comment"
     comment="# Sets the unique identifier for the minion, which is typically derived from the hostname of the machine."
-    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: $SALT_HOSTNAME" "$comment"
+    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: ${SALT_HOSTNAME}_minion" "$comment"
 elif [ "$SALT_NODE_TYPE" = "MINION" ]; then
     echo "Salt Minion configuration preprocessing..."
     comment="# Sets the unique identifier for the minion, which is typically derived from the hostname of the machine."
