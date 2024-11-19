@@ -27,9 +27,9 @@ add_if_not_exists() {
     local line="$3"
     local comment="$4"
     
-    if [ -z "$(grep "^$keyword:" "$file")" ]; then
-        echo "$line" >> "$file"
+    if [ -z "$(grep "^$keyword" "$file")" ]; then
         echo "$comment" >> "$file"
+        echo "$line" >> "$file"
         log "INFO" "Added '$line' to $file"
     else
         log "INFO" "'$keyword:' already exists in $file. Skipping addition."
@@ -39,18 +39,24 @@ add_if_not_exists() {
 # Exécution en fonction du type de composant Salt
 if [ "$SALT_NODE_TYPE" = "MASTER" ]; then
     echo "Starting Salt Master..."
+    echo "127.0.0.1       salt" >> /etc/hosts
     exec salt-master -l debug
 elif [ "$SALT_NODE_TYPE" = "SYNDIC" ]; then
     comment="# Sets the unique identifier for the minion, which is typically derived from the hostname of the machine."
-    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: $SALT_HOSTNAME" "$comment"
+    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: ${SALT_HOSTNAME}_minion" "$comment"
+    salt_master_ip=$(ping -c 1 salt_master | grep PING | awk -F'[()]' '{print $2}')
+    echo "$salt_master_ip       salt" >> /etc/hosts
     echo "Starting Salt Syndic..."
     exec salt-master -l debug
     exec salt-syndic -l debug
     exec salt-minion -l debug
 elif [ "$SALT_NODE_TYPE" = "MINION" ]; then
-    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: $(hostname)"
+    comment="# Sets the unique identifier for the minion, which is typically derived from the hostname of the machine."
+    add_if_not_exists /etc/salt/minion.d/minion.conf "id:" "id: $(hostname)" "$comment"
     echo "Starting Salt Minion..."
     exec salt-minion -l debug
+    salt_master_ip=$(ping -c 1 salt_master | grep PING | awk -F'[()]' '{print $2}')
+    echo "$salt_master_ip       salt" >> /etc/hosts
 else
     echo "Runtime Error: Invalid SALT_NODE_TYPE. Must be either MASTER, SYNDIC or MINION."
     exit 1
