@@ -23,6 +23,9 @@ configure_minion() {
 
     echo "# Defines the type of master connection, which can be 'str' for a string-based connection or other types as specified in the configuration." >> /etc/salt/minion.d/minion.conf
     echo "master_type: failover" >> /etc/salt/minion.d/minion.conf
+    
+    echo "# 'master_type' set to 'failover'. Setting 'retry_dns' to 0 to failover to the next master on DNS errors." >> /etc/salt/minion.d/minion.conf
+    echo "retry_dns: 0" >> /etc/salt/minion.d/minion.conf
 
     # echo "master_port: 4506" >> /etc/salt/minion.d/minion.conf
     # echo "user: root" >> /etc/salt/minion.d/minion.conf
@@ -50,7 +53,7 @@ configure_syndic() {
     echo "auto_accept: True" >> /etc/salt/master.d/master.conf
 
     echo "# Enables ordered communication between multiple Salt masters like (syndics)" >> /etc/salt/master.d/master.conf
-    echo "order_masters: True" >> /etc/salt/master.d/master.conf
+    echo "order_masters: False" >> /etc/salt/master.d/master.conf
 
     echo "# This defines how long the master should wait for syndics to respond." >> /etc/salt/master.d/master.conf
     echo "syndic_wait: 30" >> /etc/salt/master.d/master.conf
